@@ -1,4 +1,4 @@
-import {ROOM,television,furniture,sofaLayout,topplePose} from './model.js';
+import {ROOM,television,furniture,sofaLayout,topplePose,childPose} from './model.js?v=family4';
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const canvas=$('#room'),ctx=canvas.getContext('2d',{alpha:false});
 const state={sofaStyle:'original',sofaPlacement:'bottom',sofaLength:200,sofaSecondary:160,sofaColor:'black',dogYaw:0,dogPitch:0,size:55,mount:'stand',cabinetHeight:65,wallCenter:110,tableLength:120,tableWidth:75,view:'room',yaw:-.78,pitch:.66,zoom:1.08};
@@ -35,7 +35,17 @@ function room(){
  box(doorX-27,251,7,doorW+54,6,15,'#dacfae');
  }
  // Side window remains as a cutaway curtain plane so the room stays visible.
- if(state.view==='room'){curtain('x',12,49,5,colors.red,90,250);curtain('x',92,37,5,colors.red,90,250);box(3,250,6,14,6,130,'#d8ccab');}
+ if(state.view==='room'||camera.pos.x>244){
+ const wz=155,ww=160,wx=10;
+ // Four visible glass panes with dark frame, centered above the original left sofa.
+ for(const z of [wz,wz+ww-5,wz+ww/2-2])box(wx-2,100,z,5,145,4,'#384640');
+ for(const y of [100,171,241])box(wx-2,y,wz,5,4,ww,'#384640');
+ for(const z of [wz+5,wz+82])for(const y of [105,176])box(wx,y,z,1,65,72,'#9bb9b1');
+ box(wx-7,96,wz-4,18,5,ww+8,'#ded8c1');
+ curtain('x',wz-14,45,18,colors.red,93,251);curtain('x',wz+ww-31,45,18,colors.red,93,251);
+ box(5,251,wz-20,20,6,ww+40,'#d8ccab');
+ }
+
  }
  // Side storage and the 170 x 70 dog area from the supplied plan.
  softBox(6,0,5,39,76,60,'#9b8d73',3);softBox(5,0,80,40,55,50,'#b3a28a',3);box(7,52,84,36,3,43,'#c4b394');
@@ -60,7 +70,7 @@ function room(){
  box(x+w+13,0,z+38,32,50,43,'#b4b6a4');for(const y of [10,28,48])box(x+w+10,y,z+35,38,2,48,'#d5d5be');softBox(x+w+53,34,z+12,36,6,35,'#353e35',4);softBox(x+w+53,40,z+38,36,35,7,'#353e35',4);for(const a of [3,30])for(const b of [3,28])box(x+w+53+a,0,z+12+b,3,35,3,'#656a57');
  // Small plant in the left corner.
  cylinder(27,76,24,11,19,'#9d8c5f');for(let i=0;i<9;i++){const a=i*.8;beam(v(27,94,24),v(27+Math.cos(a)*19,118+(i%3)*8,24+Math.sin(a)*17),3,'#536d43');}
- televisionModel();if(animation.visible)littleCircle();if(state.view!=='dog')blackDog();
+ televisionModel();familyKids();if(state.view!=='dog')blackDog();
 }
 function televisionModel(){const tv=television(state.size,state.mount,state.cabinetHeight,state.wallCenter),cx=state.mount==='wall'?480-tv.depth/2:440,cz=250;
  shadow(418,190,40,120,.13);box(418,0,190,40,state.cabinetHeight,120,'#a89474');box(416,state.cabinetHeight,188,44,3,124,'#c2af8d');
@@ -81,7 +91,8 @@ $('#call-dog').addEventListener('click',callDog);
 let tapStart=null;
 canvas.addEventListener('pointerdown',e=>{tapStart={x:e.clientX,y:e.clientY}});
 canvas.addEventListener('pointerup',e=>{if(!tapStart||Math.hypot(e.clientX-tapStart.x,e.clientY-tapStart.y)>8)return;const rect=canvas.getBoundingClientRect(),x=e.clientX-rect.left,y=e.clientY-rect.top;if(state.view!=='dog'&&state.view!=='plan'&&dog.hit&&Math.hypot(x-dog.hit.x,y-dog.hit.y)<dog.hit.radius)callDog();tapStart=null;});
-function littleCircle(){const t=animation.elapsed,walk=Math.min(1,t/1200),retreat=Math.max(0,Math.min(1,(t-1800)/600));const x=350+walk*63-retreat*44,z=210+retreat*135,skin='#d5ab86',dress='#aa6473';shadow(x-9,z-7,19,16,.12);for(const dz of [-5,5]){beam(v(x,4,z+dz),v(x,32,z+dz),5,skin);softBox(x-6,1,z+dz-3,11,4,6,'#665d51',2)}softBox(x-8,30,z-9,17,27,18,dress,4);cylinder(x,64,z,8,14,skin);cylinder(x+1,74,z,8.2,6,'#3f3530');cylinder(x+1,72,z-9,3,7,'#3f3530');cylinder(x+1,72,z+9,3,7,'#3f3530');const push=t>=1200&&t<1800;for(const dz of [-8,8])beam(v(x+3,53,z+dz),v(x+(push?22:8),push?68:40,z+dz),4,skin);}
+function familyKids(){const clock=performance.now(),labels=[];for(const name of ['小森','小圈']){const boy=name==='小森',pose=childPose(name,boy?null:animation.visible?animation.elapsed:null,clock),x=pose.x,y=pose.y,z=pose.z,k=boy?1.2:1,skin='#d5ab86',cloth=boy?'#4b8b98':'#be768b';const P=(a,b,c)=>v(x+a*k,y+b*k,z+c*k);for(const dz of [-5,5]){beam(P(0,4,dz),P(0,32,dz),5*k,skin);softBox(x-6*k,y+1*k,z+(dz-3)*k,11*k,4*k,6*k,'#665d51',2)}softBox(x-8*k,y+30*k,z-9*k,17*k,27*k,18*k,cloth,4);cylinder(x,y+64*k,z,8*k,14*k,skin);cylinder(x+1*k,y+74*k,z,8.2*k,6*k,'#3f3530');if(!boy){cylinder(x+1,y+72,z-9,3,7,'#3f3530');cylinder(x+1,y+72,z+9,3,7,'#3f3530')}for(const dz of [-8,8]){const hand=pose.push?P(22,68,dz):pose.jumping?P(4,77,dz*1.8):P(8,40,dz);beam(P(3,53,dz),hand,4*k,skin);}labels.push({text:name+' '+(boy?'4歲':'2歲'),point:P(0,91,0)})}familyLabels=labels;}
+let familyLabels=[];
 function stopTopple(){animation.generation++;if(animation.raf)cancelAnimationFrame(animation.raf);animation.raf=0;animation.running=false;animation.elapsed=0;animation.visible=false;}
 function syncTopple(){const wall=state.mount==='wall';$('#play-topple').disabled=wall||animation.running;$('#reset-topple').disabled=!animation.visible;$('#topple-status').textContent=wall?'壁掛模式不播放':animation.running?'播放中…':animation.visible?'即將自動復原':'推倒後自動復原';}
 $('#play-topple').addEventListener('click',()=>{if(state.mount!=='stand'||animation.running)return;stopTopple();animation.visible=true;animation.running=true;animation.started=null;state.view='room';state.zoom=1.08;updateUI();const generation=animation.generation;function tick(now){if(generation!==animation.generation)return;if(animation.started===null)animation.started=now;animation.elapsed=Math.min(5200,now-animation.started);requestDraw();if(animation.elapsed<5200)animation.raf=requestAnimationFrame(tick);else{stopTopple();updateUI()}}animation.raf=requestAnimationFrame(tick)});
@@ -94,7 +105,7 @@ function label(text,p,color='#65806b',bg=true){const q=project(p);if(!q||q.x<15|
 function line(a,b,color='#7e9277',dash=[]){const A=project(a),B=project(b);if(!A||!B)return;ctx.save();ctx.strokeStyle=color;ctx.lineWidth=1;ctx.setLineDash(dash);ctx.beginPath();ctx.moveTo(A.x,A.y);ctx.lineTo(B.x,B.y);ctx.stroke();ctx.restore()}
 function render(){needsDraw=false;ctx.setTransform(dpr,0,0,dpr,0,0);const g=ctx.createLinearGradient(0,0,0,height);g.addColorStop(0,'#eeede5');g.addColorStop(1,'#e1e4d6');ctx.fillStyle=g;ctx.fillRect(0,0,width,height);if(state.view==='plan'){drawPlan();return}camera=makeCamera();faces=[];room();
  const list=faces.map(f=>{const points=f.points.map(project);if(points.some(p=>!p))return null;return{...f,draw:points,depth:points.reduce((s,p)=>s+p.depth,0)/points.length}}).filter(Boolean).sort((a,b)=>b.depth-a.depth);
- const tvFront=(state.mount==='wall'?480:440)-television(state.size).depth/2;const finalList=[...list.filter(f=>!f.screen),...faces.filter(f=>f.screen&&camera.pos.x<tvFront&&topplePose(animation.elapsed,state.mount).angle<1.35).map(f=>({...f,draw:f.points.map(project)})).filter(f=>f.draw.every(Boolean))];for(const f of finalList){ctx.globalAlpha=f.alpha;ctx.fillStyle=f.color;ctx.beginPath();f.draw.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.fill();if(f.alpha===1&&!f.emissive){ctx.strokeStyle=f.color;ctx.lineWidth=.4;ctx.stroke()}if(f.stroke){ctx.strokeStyle=f.stroke;ctx.lineWidth=.5;ctx.stroke()}}ctx.globalAlpha=1;drawTVArtwork();
+ const tvFront=(state.mount==='wall'?480:440)-television(state.size).depth/2;const finalList=[...list.filter(f=>!f.screen),...faces.filter(f=>f.screen&&camera.pos.x<tvFront&&topplePose(animation.elapsed,state.mount).angle<1.35).map(f=>({...f,draw:f.points.map(project)})).filter(f=>f.draw.every(Boolean))];for(const f of finalList){ctx.globalAlpha=f.alpha;ctx.fillStyle=f.color;ctx.beginPath();f.draw.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.fill();if(f.alpha===1&&!f.emissive){ctx.strokeStyle=f.color;ctx.lineWidth=.4;ctx.stroke()}if(f.stroke){ctx.strokeStyle=f.stroke;ctx.lineWidth=.5;ctx.stroke()}}ctx.globalAlpha=1;drawTVArtwork();for(const child of familyLabels)label(child.text,child.point);
  if(state.view==='room'){line(v(0,1,450),v(488,1,450));line(v(-20,1,0),v(-20,1,425));label('488 cm',v(244,0,455));label('425 cm',v(-23,0,225));label('茶几 '+state.tableLength+' × '+state.tableWidth,v(155+state.tableWidth/2,62,205+state.tableLength/2));label((state.size===32?'舊電視約 32″':state.size+'″')+' · '+(state.mount==='wall'?'壁掛':'桌上'),v(state.mount==='wall'?476:433,television(state.size,state.mount,state.cabinetHeight,state.wallCenter).top+14,250));label('200 × 80',v(220,85,398));}
  else{const tv=television(state.size,state.mount,state.cabinetHeight,state.wallCenter);label(state.size+' 吋 · 寬 '+tv.width.toFixed(1)+' cm',v(state.mount==='wall'?470:430,tv.top+12,250));}
 }
@@ -113,3 +124,7 @@ canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);
 canvas.addEventListener('pointermove',e=>{if(!pointers.has(e.pointerId))return;const old=pointers.get(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pointers.size===2){const p=[...pointers.values()],distance=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);if(lastPinch>0)state.zoom=clamp(state.zoom*distance/lastPinch,.65,1.8);lastPinch=distance}else if(state.view==='dog'){state.dogYaw-=(e.clientX-old.x)*.006;state.dogPitch=clamp(state.dogPitch-(e.clientY-old.y)*.004,-.65,.65)}else if(state.view==='room'){state.yaw-=(e.clientX-old.x)*.006;state.pitch=clamp(state.pitch+(e.clientY-old.y)*.004,.28,1.18)}requestDraw()});
 for(const event of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(event,e=>{pointers.delete(e.pointerId);lastPinch=0});canvas.addEventListener('wheel',e=>{e.preventDefault();state.zoom=clamp(state.zoom*Math.exp(-e.deltaY*.001),.65,1.8);requestDraw()},{passive:false});canvas.addEventListener('keydown',e=>{if(state.view==='dog'&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)){if(e.key==='ArrowLeft')state.dogYaw+=.12;if(e.key==='ArrowRight')state.dogYaw-=.12;if(e.key==='ArrowUp')state.dogPitch=clamp(state.dogPitch+.06,-.65,.65);if(e.key==='ArrowDown')state.dogPitch=clamp(state.dogPitch-.06,-.65,.65)}else if(e.key==='ArrowLeft')state.yaw+=.12;else if(e.key==='ArrowRight')state.yaw-=.12;else if(e.key==='ArrowUp')state.pitch=clamp(state.pitch+.06,.28,1.18);else if(e.key==='ArrowDown')state.pitch=clamp(state.pitch-.06,.28,1.18);else if(e.key==='+')state.zoom=clamp(state.zoom+.1,.65,1.8);else if(e.key==='-')state.zoom=clamp(state.zoom-.1,.65,1.8);else return;e.preventDefault();requestDraw()});
 new ResizeObserver(resize).observe(canvas);updateUI();resize();
+
+let familyInView=true;const reducedMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches||false;
+if(typeof IntersectionObserver!=='undefined')new IntersectionObserver(entries=>{familyInView=entries[0].isIntersecting}).observe(canvas);
+const familyTimer=setInterval(()=>{if(familyInView&&!document.hidden&&!reducedMotion&&state.view!=='plan')requestDraw()},85);familyTimer.unref?.();
