@@ -1,19 +1,13 @@
 # 客廳家具配置模擬室
 
-依 488 × 425 cm 配置圖與實景配色的靜態互動 demo。免安裝、免登入，入口為 index.html。
+網址：https://oloid666.github.io/living-room-planner/
 
-- 舊電視約 32 吋（照片估算）、LG 55UA7550PTA、60／65 吋比例比較。
-- 桌上／壁掛切換與高度調整。
-- 沙發款式、尺寸、顏色與靠牆擺放比較。
-- 可調茶几、黑色金屬狗屋、置中門與狗屋內往外看的肉球視角。
+純靜態 Canvas 3D，無外部依賴。新舊電視比較、桌上／壁掛、可調茶几、置中門、黑色金屬狗屋、肉球往外看。
 
-55 吋依 LG 官方尺寸建立簡化模型，非原廠 CAD；舊電視為目測估算，60／65 吋為比例示意。沙發為通用外觀、家具高度與茶几為估算，非施工或商品規格。
+沙發提供兩個固定選項：目前配置（下牆200×80＋左牆160×80 cm），或兩個200×80 cm，位置不變；保留顏色切換。
 
-## GitHub Pages
+「模擬小圈推倒電視」以簡化2歲女孩角色走近、伸手、退開，電視向客廳傾倒。桌上模式可播放，壁掛停用；可重設，切換尺寸或安裝方式會自動重設。這是情境動畫，不是受力、穩定性或安全測試，不代表任何尺寸較安全。
 
-Settings → Pages → Deploy from a branch → main → / (root) → Save。
-發布網址：https://oloid666.github.io/living-room-planner/
+55吋依LG 55UA7550PTA官方規格建立簡化模型，舊電視約32吋為目測估算，60／65吋為比例示意。家具高度與茶几為估算，非施工圖。
 
-後續修改 main 分支的 HTML、CSS 或 JavaScript 後會自動部署。所有程式資源皆同站提供，不依賴 CDN。
-
-LG 來源：https://www.lg.com/tw/tv-soundbars/4k-uhd-tvs/55ua7550pta/
+Pages 使用 GitHub Actions；.github/workflows/pages.yml 在 main 提交或手動執行時，上傳四個靜態檔案並部署。Settings → Pages → Source 應為 GitHub Actions。
