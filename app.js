@@ -1,8 +1,9 @@
-import {ROOM,television,furniture,sofaLayout,topplePose,childPose} from './model.js?v=visits5';
-import {route,PARK,visitPose,greetingChild,dogTrip} from './events.js?v=visits5';
+import {ROOM,television,furniture,sofaLayout,topplePose,childPose} from './model.js?v=sleep6';
+import {route,PARK,visitPose,greetingChild,dogTrip} from './events.js?v=sleep6';
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const canvas=$('#room'),ctx=canvas.getContext('2d',{alpha:false});
 const visit={active:false,kind:null,elapsed:0,started:0,parked:false,grandmaInside:false,speech:false};const boostUntil={小森:0,小圈:0};let childHits=[];
+const uncle={hit:null,bubbleUntil:0};
 const state={showDimensions:false,sofaStyle:'original',sofaPlacement:'bottom',sofaLength:200,sofaSecondary:160,sofaColor:'black',dogYaw:0,dogPitch:0,size:55,mount:'stand',cabinetHeight:65,wallCenter:110,tableLength:120,tableWidth:75,view:'room',yaw:-.78,pitch:.66,zoom:1.08};
 const dog={active:false,started:0,elapsed:0,raf:0,bubbleTimer:0,hit:null};let barkAudio=null;
 let tvScreenQuad=null;let screenArt=null;let modelTransform=null;const animation={elapsed:0,running:false,visible:false,raf:0,started:0,generation:0};
@@ -73,7 +74,7 @@ function room(){
  box(x+w+13,0,z+38,32,50,43,'#b4b6a4');for(const y of [10,28,48])box(x+w+10,y,z+35,38,2,48,'#d5d5be');softBox(x+w+53,34,z+12,36,6,35,'#353e35',4);softBox(x+w+53,40,z+38,36,35,7,'#353e35',4);for(const a of [3,30])for(const b of [3,28])box(x+w+53+a,0,z+12+b,3,35,3,'#656a57');
  // Small plant in the left corner.
  cylinder(27,76,24,11,19,'#9d8c5f');for(let i=0;i<9;i++){const a=i*.8;beam(v(27,94,24),v(27+Math.cos(a)*19,118+(i%3)*8,24+Math.sin(a)*17),3,'#536d43');}
- televisionModel();familyKids();visitors();if(state.view!=='dog')blackDog();
+ televisionModel();familyKids();sleepingUncle();visitors();if(state.view!=='dog')blackDog();
 }
 function televisionModel(){const tv=television(state.size,state.mount,state.cabinetHeight,state.wallCenter),cx=state.mount==='wall'?480-tv.depth/2:440,cz=250;
  shadow(418,190,40,120,.13);box(418,0,190,40,state.cabinetHeight,120,'#a89474');box(416,state.cabinetHeight,188,44,3,124,'#c2af8d');
@@ -93,14 +94,44 @@ function callDog(){if(dog.active)return;let audioReady=null;try{const Audio=wind
 $('#call-dog').addEventListener('click',callDog);
 let tapStart=null;
 canvas.addEventListener('pointerdown',e=>{tapStart={x:e.clientX,y:e.clientY}});
-canvas.addEventListener('pointerup',e=>{if(!tapStart||Math.hypot(e.clientX-tapStart.x,e.clientY-tapStart.y)>8)return;const rect=canvas.getBoundingClientRect(),x=e.clientX-rect.left,y=e.clientY-rect.top;const hit=childHits.find(h=>Math.hypot(x-h.x,y-h.y)<h.radius);if(hit){boostUntil[hit.name]=performance.now()+6500;requestDraw();tapStart=null;return}if(state.view!=='dog'&&state.view!=='plan'&&dog.hit&&Math.hypot(x-dog.hit.x,y-dog.hit.y)<dog.hit.radius)callDog();tapStart=null;});
+canvas.addEventListener('pointerup',e=>{if(!tapStart||Math.hypot(e.clientX-tapStart.x,e.clientY-tapStart.y)>8)return;const rect=canvas.getBoundingClientRect(),x=e.clientX-rect.left,y=e.clientY-rect.top;const hit=childHits.find(h=>Math.hypot(x-h.x,y-h.y)<h.radius);if(uncle.hit&&state.view!=='plan'&&Math.hypot(x-uncle.hit.x,y-uncle.hit.y)<uncle.hit.radius){uncleBubbles();tapStart=null;return}if(hit){boostUntil[hit.name]=performance.now()+6500;requestDraw();tapStart=null;return}if(state.view!=='dog'&&state.view!=='plan'&&dog.hit&&Math.hypot(x-dog.hit.x,y-dog.hit.y)<dog.hit.radius)callDog();tapStart=null;});
 function familyKids(){const clock=performance.now(),labels=[];childHits=[];for(const name of ['小森','小圈']){const boy=name==='小森',boost=clock<boostUntil[name],pose=visit.active&&visit.kind==='grandma'?{...greetingChild(name,visit.elapsed),push:false,jumping:false}:childPose(name,boy?null:animation.visible?animation.elapsed:null,boost?clock*2.8:clock);if(boost&&pose.jumping)pose.y=50+(pose.y-50)*2.6;const x=pose.x,y=pose.y,z=pose.z,k=boy?1.2:1,skin='#d5ab86',cloth=boy?'#4b8b98':'#be768b';const P=(a,b,c)=>v(x+a*k,y+b*k,z+c*k);for(const dz of [-5,5]){beam(P(0,4,dz),P(0,32,dz),5*k,skin);softBox(x-6*k,y+1*k,z+(dz-3)*k,11*k,4*k,6*k,'#665d51',2)}softBox(x-8*k,y+30*k,z-9*k,17*k,27*k,18*k,cloth,4);cylinder(x,y+64*k,z,8*k,14*k,skin);cylinder(x+1*k,y+74*k,z,8.2*k,6*k,'#3f3530');if(!boy){cylinder(x+1,y+72,z-9,3,7,'#3f3530');cylinder(x+1,y+72,z+9,3,7,'#3f3530')}for(const dz of [-8,8]){const hand=pose.push?P(22,68,dz):pose.jumping?P(4,77,dz*1.8):P(8,40,dz);beam(P(3,53,dz),hand,4*k,skin);}labels.push({text:name,point:P(0,91,0)});const hit=project(P(0,45,0));if(hit)childHits.push({...hit,name,radius:Math.max(22,width/30)})}familyLabels=labels;}
 let familyLabels=[];
 function stopTopple(){animation.generation++;if(animation.raf)cancelAnimationFrame(animation.raf);animation.raf=0;animation.running=false;animation.elapsed=0;animation.visible=false;}
 function syncTopple(){const wall=state.mount==='wall';$('#play-topple').disabled=wall||animation.running||visit.active;$('#reset-topple').disabled=!animation.visible;$('#topple-status').textContent=wall?'壁掛模式不播放':animation.running?'播放中…':animation.visible?'即將自動復原':'推倒後自動復原';}
 $('#play-topple').addEventListener('click',()=>{if(state.mount!=='stand'||animation.running||visit.active)return;stopTopple();animation.visible=true;animation.running=true;animation.started=null;state.view='room';state.zoom=1.08;updateUI();const generation=animation.generation;function tick(now){if(generation!==animation.generation)return;if(animation.started===null)animation.started=now;animation.elapsed=Math.min(5200,now-animation.started);requestDraw();if(animation.elapsed<5200)animation.raf=requestAnimationFrame(tick);else{stopTopple();updateUI()}}animation.raf=requestAnimationFrame(tick)});
 $('#reset-topple').addEventListener('click',()=>{stopTopple();updateUI()});
-function adult(person,grandma=false,hug=false){const {x,y,z}=person;if(z<0)return;const cloth=grandma?'#ad826c':'#7f83a0';for(const dz of [-7,7])beam(v(x,4,z+dz),v(x,59,z+dz),7,'#554f48');softBox(x-12,y+54,z-14,25,48,28,cloth,5);cylinder(x,y+112,z,11,22,'#d4b197');cylinder(x+2,y+133,z,12,8,grandma?'#aca99b':'#353231');for(const dz of [-14,14])beam(v(x,94,z+dz),v(x+(hug?-20:3),hug?72:64,z+dz*(hug?1.8:1)),6,'#c4a388');}
+
+function uncleBubbles(){uncle.bubbleUntil=performance.now()+4500;requestDraw()}
+$('#wake-uncle').addEventListener('click',uncleBubbles);
+function sleepingUncle(){
+ // Seated between the children on the main sofa, facing into the room.
+ const firstFace=faces.length;
+ const x=48,z=245,breathe=Math.sin(performance.now()*.002)*1.2,skin='#d1ad8e';
+ shadow(x-5,z-22,36,44,.1);
+ for(const dz of [-12,12]){beam(v(x,50,z+dz),v(x+24,38,z+dz),12,'#555e66');beam(v(x+24,38,z+dz),v(x+28,10,z+dz),9,'#555e66');softBox(x+22,6,z+dz-6,20,7,12,'#514b42',3)}
+ softBox(x-15,50,z-23,35,43,46,'#788a72',10);
+ cylinder(x+4,60,z,24+breathe,27,'#84957b',16);
+ cylinder(x-1,96+breathe,z,14,23,skin);cylinder(x-2,114+breathe,z,14.5,7,'#302c29');
+ for(const dz of [-23,23]){beam(v(x,85,z+dz),v(x+21,70,z+dz*.65),9,skin);beam(v(x+21,70,z+dz*.65),v(x+23,75,z+dz*.23),8,skin)}
+ // Closed eyes and a small open mouth face into the room.
+ for(const dz of [-6,6])beam(v(x+12,108+breathe,z+dz-2),v(x+12,108+breathe,z+dz+2),1.4,'#4e4137');
+ box(x+13,100+breathe,z-2,1,3,4,'#715447');
+ for(let i=firstFace;i<faces.length;i++)faces[i].points=faces[i].points.map(p=>v(222+p.z-z,p.y,377-(p.x-x)));
+ const q=project(v(222,80,374));uncle.hit=q?{...q,radius:Math.max(24,Math.min(width/21,43))}:null;
+}
+function drawUncleBubbles(){
+ if(state.view==='plan')return;
+ const now=performance.now();label('舅舅 zzz',v(222,143,377));
+ if(now>=uncle.bubbleUntil)return;
+ const head=project(v(222,133,375));if(!head)return;
+ const elapsed=4500-(uncle.bubbleUntil-now);
+ ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';
+ for(let i=0;i<5;i++){const p=((elapsed+i*330)%1700)/1700,r=7+p*12,dx=Math.sin(p*4+i)*17,dy=p*110;ctx.globalAlpha=Math.sin(p*Math.PI)*.9;ctx.fillStyle='#fffdf0';ctx.strokeStyle='#b6c8ac';ctx.lineWidth=1.4;ctx.beginPath();ctx.arc(head.x+dx,head.y-dy,r,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle='#617458';ctx.font='600 '+Math.round(r)+'px sans-serif';ctx.fillText(i%2?'z':'Z',head.x+dx,head.y-dy)}
+ ctx.restore();
+}
+
+function adult(person,grandma=false,hug=false){const {x,y,z}=person;if(z<0)return;const cloth=grandma?'#ad826c':'#7f83a0';for(const dz of [-7,7])beam(v(x,4,z+dz),v(x,59,z+dz),7,'#554f48');softBox(x-12,y+54,z-14,25,48,28,cloth,5);cylinder(x,y+112,z,11,22,'#d4b197');cylinder(x+2,y+133,z,12,8,grandma?'#242321':'#353231');for(const dz of [-14,14])beam(v(x,94,z+dz),v(x+(hug?-20:3),hug?72:64,z+dz*(hug?1.8:1)),6,'#c4a388');}
 function scooter(p){if(p.z< -30)return;const {x,z}=p;for(const dz of [-34,34]){softBox(x-7,3,z+dz-8,14,23,16,'#252b29',6);softBox(x-4,8,z+dz-5,8,13,10,'#7b8178',3)}softBox(x-17,21,z-39,34,24,77,'#637e83',7);softBox(x-13,45,z-25,27,10,39,'#2e3432',5);box(x-15,32,z-39,30,42,9,'#849c9b');beam(v(x,65,z-35),v(x,88,z-38),4,'#4c5552');beam(v(x-21,88,z-38),v(x+21,88,z-38),3,'#343b38');box(x-8,62,z-45,16,9,3,'#e6d99d');}
 function visitors(){if(visit.grandmaInside&&!(visit.active&&visit.kind==='grandma'))adult({x:335,y:0,z:330},true);if(visit.active){const pose=visitPose(visit.kind,visit.elapsed);adult(pose.person,visit.kind==='grandma',pose.hug);if(visit.kind==='grandma'){if(visit.parked)scooter(PARK)}else{scooter(pose.bike);if(pose.person.z>=0)beam(v(pose.person.x+3,94,pose.person.z-14),v(pose.bike.x-20,88,pose.bike.z-38),5,'#c4a388')}}else{if(visit.parked)scooter(PARK)}}
 function syncVisitUI(){const busy=visit.active||animation.running;$('#grandma-home').disabled=busy;$('#aunt-bike').disabled=busy;$('#aunt-bike').textContent=visit.parked?'姨姨牽機車出去':'姨姨牽機車進來';}
@@ -114,7 +145,7 @@ function label(text,p,color='#65806b',bg=true){const q=project(p);if(!q||q.x<15|
 function line(a,b,color='#7e9277',dash=[]){const A=project(a),B=project(b);if(!A||!B)return;ctx.save();ctx.strokeStyle=color;ctx.lineWidth=1;ctx.setLineDash(dash);ctx.beginPath();ctx.moveTo(A.x,A.y);ctx.lineTo(B.x,B.y);ctx.stroke();ctx.restore()}
 function render(){needsDraw=false;ctx.setTransform(dpr,0,0,dpr,0,0);const g=ctx.createLinearGradient(0,0,0,height);g.addColorStop(0,'#eeede5');g.addColorStop(1,'#e1e4d6');ctx.fillStyle=g;ctx.fillRect(0,0,width,height);if(state.view==='plan'){drawPlan();return}camera=makeCamera();faces=[];room();
  const list=faces.map(f=>{const points=f.points.map(project);if(points.some(p=>!p))return null;return{...f,draw:points,depth:points.reduce((s,p)=>s+p.depth,0)/points.length}}).filter(Boolean).sort((a,b)=>b.depth-a.depth);
- const tvFront=(state.mount==='wall'?480:440)-television(state.size).depth/2;const finalList=[...list.filter(f=>!f.screen),...faces.filter(f=>f.screen&&camera.pos.x<tvFront&&topplePose(animation.elapsed,state.mount).angle<1.35).map(f=>({...f,draw:f.points.map(project)})).filter(f=>f.draw.every(Boolean))];for(const f of finalList){ctx.globalAlpha=f.alpha;ctx.fillStyle=f.color;ctx.beginPath();f.draw.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.fill();if(f.alpha===1&&!f.emissive){ctx.strokeStyle=f.color;ctx.lineWidth=.4;ctx.stroke()}if(f.stroke){ctx.strokeStyle=f.stroke;ctx.lineWidth=.5;ctx.stroke()}}ctx.globalAlpha=1;drawTVArtwork();for(const child of familyLabels)label(child.text,child.point);
+ const tvFront=(state.mount==='wall'?480:440)-television(state.size).depth/2;const finalList=[...list.filter(f=>!f.screen),...faces.filter(f=>f.screen&&camera.pos.x<tvFront&&topplePose(animation.elapsed,state.mount).angle<1.35).map(f=>({...f,draw:f.points.map(project)})).filter(f=>f.draw.every(Boolean))];for(const f of finalList){ctx.globalAlpha=f.alpha;ctx.fillStyle=f.color;ctx.beginPath();f.draw.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.fill();if(f.alpha===1&&!f.emissive){ctx.strokeStyle=f.color;ctx.lineWidth=.4;ctx.stroke()}if(f.stroke){ctx.strokeStyle=f.stroke;ctx.lineWidth=.5;ctx.stroke()}}ctx.globalAlpha=1;drawTVArtwork();for(const child of familyLabels)label(child.text,child.point);drawUncleBubbles();
  if(state.showDimensions&&state.view==='room'){line(v(0,1,450),v(488,1,450));line(v(-20,1,0),v(-20,1,425));label('488 cm',v(244,0,455));label('425 cm',v(-23,0,225));label('茶几 '+state.tableLength+' × '+state.tableWidth,v(155+state.tableWidth/2,62,205+state.tableLength/2));label((state.size===40?'舊電視約 40″':state.size+'″')+' · '+(state.mount==='wall'?'壁掛':'桌上'),v(state.mount==='wall'?476:433,television(state.size,state.mount,state.cabinetHeight,state.wallCenter).top+14,250));label('200 × 80',v(220,85,398));}
  else if(state.showDimensions){const tv=television(state.size,state.mount,state.cabinetHeight,state.wallCenter);label(state.size+' 吋 · 寬 '+tv.width.toFixed(1)+' cm',v(state.mount==='wall'?470:430,tv.top+12,250));}
 }
@@ -137,4 +168,4 @@ new ResizeObserver(resize).observe(canvas);updateUI();resize();
 
 let familyInView=true;const reducedMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches||false;
 if(typeof IntersectionObserver!=='undefined')new IntersectionObserver(entries=>{familyInView=entries[0].isIntersecting}).observe(canvas);
-const familyTimer=setInterval(()=>{if(!document.hidden&&visit.active){visit.elapsed=performance.now()-visit.started;const pose=visitPose(visit.kind,visit.elapsed);if(visit.elapsed>=pose.duration){if(visit.kind==='parkBike')visit.parked=true;if(visit.kind==='takeBike')visit.parked=false;if(visit.kind==='grandma')visit.grandmaInside=true;visit.active=false;$('#family-speech').hidden=true;updateUI()}else if(visit.kind==='grandma'&&pose.hug){$('#family-speech').hidden=false;if(!visit.speech){visit.speech=true;try{if(window.speechSynthesis){const say=new SpeechSynthesisUtterance('阿嬤抱抱');say.lang='zh-TW';say.pitch=1.6;window.speechSynthesis.speak(say)}}catch(e){}}}else $('#family-speech').hidden=true;requestDraw()}else if(familyInView&&!document.hidden&&!reducedMotion&&state.view!=='plan')requestDraw()},85);familyTimer.unref?.();
+const familyTimer=setInterval(()=>{if(!document.hidden&&visit.active){visit.elapsed=performance.now()-visit.started;const pose=visitPose(visit.kind,visit.elapsed);if(visit.elapsed>=pose.duration){if(visit.kind==='parkBike')visit.parked=true;if(visit.kind==='takeBike')visit.parked=false;if(visit.kind==='grandma')visit.grandmaInside=true;visit.active=false;$('#family-speech').hidden=true;updateUI()}else if(visit.kind==='grandma'&&pose.hug){$('#family-speech').hidden=false;if(!visit.speech){visit.speech=true;try{if(window.speechSynthesis){const say=new SpeechSynthesisUtterance('阿嬤抱抱');say.lang='zh-TW';say.pitch=1.6;window.speechSynthesis.speak(say)}}catch(e){}}}else $('#family-speech').hidden=true;requestDraw()}else if(familyInView&&!document.hidden&&(!reducedMotion||performance.now()<uncle.bubbleUntil)&&state.view!=='plan')requestDraw()},85);familyTimer.unref?.();
