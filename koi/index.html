@@ -23,6 +23,11 @@ button{font:inherit;font-size:12px;letter-spacing:.04em;color:var(--fg);border:1
 @media(max-width:640px){.brand h1{font-size:38px}.brand small{font-size:10px;max-width:220px;line-height:1.6}.right{padding:8px 10px;font-size:9px}.right strong{font-size:15px}footer{align-items:stretch;flex-direction:column}.instructions{font-size:11px}.buttons{justify-content:flex-start}button{padding:11px 14px}#legend{display:none}header{top:24px}footer{bottom:max(18px,env(safe-area-inset-bottom))}}
 @media(prefers-reduced-motion:reduce){button{transition:none}}
 header{top:max(20px,env(safe-area-inset-top))}button{min-height:44px}footer{bottom:max(20px,env(safe-area-inset-bottom))}@media(max-height:500px){.brand h1{font-size:26px}.brand small,.brand .tag,.instructions{display:none}header{top:12px}footer{bottom:max(10px,env(safe-area-inset-bottom))}}
+
+#stage{background:radial-gradient(ellipse at 60% 40%,#252421,#191918 75%)}
+#stage::before{opacity:.07}.brand h1{font-size:clamp(28px,4vw,48px)}.brand small{display:none}
+#fps{position:fixed;right:16px;top:max(12px,env(safe-area-inset-top));z-index:6;border:0;background:#262621;color:#d9d3bd;padding:7px 12px;min-height:32px;font-size:11px}
+header .right{display:none}#settings{position:fixed;right:12px;top:max(52px,calc(env(safe-area-inset-top) + 44px));z-index:8;width:min(340px,calc(100vw - 24px));max-height:calc(100dvh - 120px);overflow:auto;background:#242420f5;border:1px solid #77745c55;border-radius:16px;padding:18px;box-shadow:0 12px 50px #0008;font-size:12px}#settings[hidden]{display:none}#settings label{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:13px 0}#settings input[type=range]{width:145px}#settings select{background:#38382e;color:#eee;padding:8px;border:1px solid #7775;border-radius:8px}#metrics{white-space:pre-line;color:#c4beaa;line-height:1.9;border-bottom:1px solid #7774;padding-bottom:12px;font-variant-numeric:tabular-nums}.settings-actions{display:flex;gap:8px}footer .instructions{font-size:10px}button.primary{background:#d8c3a2}input{accent-color:#c9b18e}@media(max-width:640px){.brand .tag{font-size:9px;margin-bottom:9px}.brand h1{font-size:29px}footer{gap:8px}.instructions{max-width:280px}}
 </style>
 </head>
 <body>
@@ -30,28 +35,39 @@ header{top:max(20px,env(safe-area-inset-top))}button{min-height:44px}footer{bott
 <header><div class="brand"><div class="tag">[ INTERACTIVE / 001 ]</div><h1>ASCII<br><em>Koi Pond.</em></h1><small>一池字元，一點漣漪。<br>每條魚都是即時繪製的文字。</small></div><div class="right">POND STATUS<strong><span id="fishCount">6</span> koi · <span id="foodCount">0</span> food</strong>已吃掉 <span id="eatenCount">0</span> 顆</div></header>
 <div id="legend">錦鯉游於字裡行間</div>
 <footer><div class="instructions"><b>↗ 點擊水面</b>，撒下飼料 · <b>移動滑鼠</b>，與魚互動<br>純 Canvas + JavaScript · 無圖片、無依賴</div><div class="buttons"><button class="primary" id="feed">＋ 餵食</button><button id="add">＋ 加一條魚</button><button id="clear">↺ 重置</button></div></footer>
+<button id="fps" aria-controls="settings" aria-expanded="false">FPS — · 效能</button>
+<section id="settings" hidden aria-label="畫質與效能設定"><div id="metrics"></div><label>FPS 顯示<input type="checkbox" data-setting="fps"></label><label>幀率上限<select data-setting="cap"><option value="30">30 FPS</option><option value="60">60 FPS</option><option value="0">跟隨螢幕</option></select></label><label>畫質<select data-setting="quality"><option value="1">省電</option><option value="1.5">標準</option><option value="2">精緻</option></select></label><label>字元大小 <output id="glyph-value"></output><input type="range" min="75" max="110" step="1" data-setting="glyph"></label><label>游速<input type="range" min="0.5" max="1.5" step="0.1" data-setting="speed"></label><label>擺尾幅度<input type="range" min="0.5" max="1.5" step="0.1" data-setting="tail"></label><label>方格材質<input type="checkbox" data-setting="tiles"></label><label>微光<input type="checkbox" data-setting="glow"></label><label>柔暗影<input type="checkbox" data-setting="shadow"></label><label>水波<input type="checkbox" data-setting="ripples"></label><label>滑鼠驚嚇<input type="checkbox" data-setting="scare"></label><div class="settings-actions"><button id="restore-settings">還原參數</button><button id="close-settings">關閉</button></div></section>
 <div id="toast" role="status" aria-live="polite"></div>
 <script>
 (()=>{
 'use strict';
 const canvas=document.getElementById('pond'),ctx=canvas.getContext('2d');
 const stage=document.getElementById('stage');
+const defaults={fps:true,cap:60,quality:1.5,glyph:88,speed:1,tail:1,tiles:true,glow:true,shadow:true,ripples:true,scare:true};
+let settings={...defaults};try{const saved=JSON.parse(localStorage.getItem('koi-settings-v2')||'{}');for(const k in defaults)if(typeof saved[k]===typeof defaults[k])settings[k]=saved[k]}catch(e){}
+for(const [k,min,max] of [['glyph',75,110],['speed',.5,1.5],['tail',.5,1.5]])settings[k]=Math.max(min,Math.min(max,settings[k]));if(![0,30,60].includes(settings.cap))settings.cap=60;if(![1,1.5,2].includes(settings.quality))settings.quality=1.5;
+const fpsButton=document.getElementById('fps'),panel=document.getElementById('settings'),metrics=document.getElementById('metrics');
+function syncSettings(){document.querySelectorAll('[data-setting]').forEach(el=>{const k=el.dataset.setting;if(el.type==='checkbox')el.checked=settings[k];else el.value=settings[k]});document.getElementById('glyph-value').textContent=settings.glyph+'%';if(!settings.fps)fpsButton.textContent='效能 ⚙'}
+function togglePanel(open){panel.hidden=!open;fpsButton.setAttribute('aria-expanded',String(open))}fpsButton.onclick=()=>togglePanel(panel.hidden);document.getElementById('close-settings').onclick=()=>togglePanel(false);
+document.querySelectorAll('[data-setting]').forEach(el=>el.addEventListener('input',()=>{settings[el.dataset.setting]=el.type==='checkbox'?el.checked:Number(el.value);try{localStorage.setItem('koi-settings-v2',JSON.stringify(settings))}catch(e){}syncSettings();if(el.dataset.setting==='quality')resize()}));
+document.getElementById('restore-settings').onclick=()=>{settings={...defaults};try{localStorage.removeItem('koi-settings-v2')}catch(e){}syncSettings();resize()};syncSettings();
+let samples=[],measureAt=0,lastRender=0,paintMs=0;
 const fishEl=document.getElementById('fishCount'),foodEl=document.getElementById('foodCount'),toastEl=document.getElementById('toast');
 const TAU=Math.PI*2,rand=(a,b)=>a+Math.random()*(b-a),clamp=(x,a,b)=>Math.max(a,Math.min(b,x)),dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y),wrap=a=>Math.atan2(Math.sin(a),Math.cos(a));
 let W=innerWidth,H=innerHeight,dpr=1,time=0,last=performance.now(),nextId=1,toastTimer=0;
 let fish=[],food=[],ripples=[],eaten=0,raf=0;
 const eatenEl=document.getElementById("eatenCount");
 const looks=[
- {name:'Kohaku',white:'#f2e9d9',red:'#ef795e',dark:'#203039',pattern:0},
- {name:'Sanke',white:'#f3e7d7',red:'#e8705c',dark:'#23363b',pattern:1},
+ {name:'Kohaku',white:'#f2e9d9',red:'#ef795e',dark:'#706b69',pattern:0},
+ {name:'Sanke',white:'#f3e7d7',red:'#e8705c',dark:'#6b6566',pattern:1},
  {name:'Ogon',white:'#e8c985',red:'#ffdca3',dark:'#7c5e3a',pattern:2},
- {name:'Showa',white:'#dde2d8',red:'#ef8666',dark:'#314048',pattern:3},
+ {name:'Showa',white:'#dde2d8',red:'#ef8666',dark:'#625b60',pattern:3},
  {name:'Platinum',white:'#eff3e9',red:'#cddfcf',dark:'#73858a',pattern:4}
 ];
-function resize(){const oldW=W,oldH=H;W=stage.clientWidth;H=stage.clientHeight;if(fish.length){for(const f of fish){f.x=f.x/oldW*W;f.y=f.y/oldH*H}for(const p of food){p.x=p.x/oldW*W;p.y=p.y/oldH*H}}dpr=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);canvas.style.width=W+'px';canvas.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0)}
+function resize(){const oldW=W,oldH=H;W=stage.clientWidth;H=stage.clientHeight;if(fish.length){for(const f of fish){f.x=f.x/oldW*W;f.y=f.y/oldH*H}for(const p of food){p.x=p.x/oldW*W;p.y=p.y/oldH*H}}dpr=Math.min(window.devicePixelRatio||1,settings.quality);canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);canvas.style.width=W+'px';canvas.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0)}
 function addFish(x=rand(W*.2,W*.8),y=rand(H*.2,H*.8)){
- const len=rand(120,177)*(W<600?.77:1),angle=rand(-Math.PI,Math.PI);
- fish.push({id:nextId++,x,y,len,angle,speed:rand(24,38),cruise:rand(22,34),phase:rand(0,TAU),turn:rand(-.3,.3),wander:rand(1,4),look:looks[Math.floor(Math.random()*looks.length)],seed:rand(0,20)});
+ const len=rand(120,177)*(W<600?.92:1),angle=rand(-Math.PI,Math.PI);
+ fish.push({id:nextId++,x,y,len,angle,speed:rand(24,38),cruise:rand(22,34),phase:rand(0,TAU),turn:rand(-.3,.3),wander:rand(1,4),look:looks[Math.floor(Math.random()*looks.length)],bulk:rand(.86,1.13),seed:rand(0,20)});
  fishEl.textContent=fish.length;
 }
 function reset(){fish=[];food=[];ripples=[];nextId=1;eaten=0;eatenEl.textContent=0;const count=W<600?4:6;for(let i=0;i<count;i++){const x=W<600?W*(i%2?.72:.30):W*(.25+.55*h(i,6.2));const y=H*(.23+.54*(i+.5)/count);addFish(x,y)}foodEl.textContent='0'}
@@ -79,12 +95,12 @@ function update(dt){
   if(f.y>H-safe)dy-=(f.y-(H-safe))*3;
   for(const other of fish){if(other===f)continue;const dd=dist(f,other);if(dd<80&&dd>0){dx+=(f.x-other.x)/dd*25;dy+=(f.y-other.y)/dd*25}}
   const pd=Math.hypot(pointer.x-f.x,pointer.y-f.y);
-  if(pointer.active&&pointer.speed>220&&pd<115&&pd>0&&!target){dx+=(f.x-pointer.x)/pd*180;dy+=(f.y-pointer.y)/pd*180}
+  if(settings.scare&&pointer.active&&pointer.speed>220&&pd<115&&pd>0&&!target){dx+=(f.x-pointer.x)/pd*180;dy+=(f.y-pointer.y)/pd*180}
   const desired=Math.atan2(dy,dx),delta=wrap(desired-f.angle);
-  f.angle+=clamp(delta,-dt*1.2,dt*1.2);
+  f.angle+=clamp(delta,-dt*1.2,dt*1.2);f.bend=(f.bend||0)+(clamp(delta,-1,1)-(f.bend||0))*Math.min(1,dt*3);
   const goal=target?randless(f,54,65):f.cruise;
   f.speed+=(goal-f.speed)*Math.min(1,dt*1.5);
-  f.x+=Math.cos(f.angle)*f.speed*dt;f.y+=Math.sin(f.angle)*f.speed*dt;
+  f.x+=Math.cos(f.angle)*f.speed*dt*settings.speed;f.y+=Math.sin(f.angle)*f.speed*dt*settings.speed;
   f.x=clamp(f.x,-30,W+30);f.y=clamp(f.y,-30,H+30);
  }
 }
@@ -94,55 +110,52 @@ function rgba(hex,opacity){const n=parseInt(hex.slice(1),16);return `rgba(${n>>1
 function glyphAt(x,y,glyph,color,alpha=1){ctx.globalAlpha=alpha;ctx.fillStyle=color;ctx.fillText(glyph,x,y)}
 // The fish are drawn entirely from characters. Each screen cell is mapped back to fish-body space.
 function koiGlyph(f){
- const L=f.len,c=Math.cos(f.angle),s=Math.sin(f.angle),cw=7.5,ch=9.5;
- const x0=Math.floor((f.x-L*.97)/cw),x1=Math.ceil((f.x+L*.97)/cw),y0=Math.floor((f.y-L*.97)/ch),y1=Math.ceil((f.y+L*.97)/ch);
- const patches=f.look;
- for(let iy=y0;iy<=y1;iy++)for(let ix=x0;ix<=x1;ix++){
-  const px=ix*cw+cw*.5,py=iy*ch+ch*.5,rx=px-f.x,ry=py-f.y;
-  const lx=(rx*c+ry*s)/L,ly=(-rx*s+ry*c)/L;
-  const bend=Math.sin(f.phase+lx*7)*Math.max(0,.23-lx)*.06;
-  const yy=ly-bend;
-  const t=(lx+.57)/1.12,thickness=t>0&&t<1?Math.pow(Math.sin(t*Math.PI),.75)*.205:0;
-  const body=t>0&&t<1&&Math.abs(yy)<thickness;
-  const tailA=((lx+.72)/.22)**2+((yy-.135)/.13)**2<1;
-  const tailB=((lx+.72)/.22)**2+((yy+.135)/.13)**2<1;
-  const finA=((lx+.11)/.20)**2+((yy-.245)/.105)**2<1;
-  const finB=((lx+.11)/.20)**2+((yy+.245)/.105)**2<1;
-  if(!body&&!tailA&&!tailB&&!finA&&!finB)continue;
-  const n=h(Math.floor(lx*28),Math.floor(yy*40),f.id),col=body?Math.abs(yy)/(thickness||1):1;
-  let glyph=body?'t%SX8@#'[Math.min(6,Math.floor(n*7))]:'.:;t%S'[Math.min(4,Math.floor(n*5))];
-  let color=patches.white,alpha=.9;
-  if(body){
-   const patch=Math.sin(lx*21+f.seed)*Math.cos(yy*20+f.seed*.64)+Math.sin(lx*39-yy*14+f.seed)*.32;
-   const red=patch>.18&&lx<.28;
-   const black=patches.pattern===1&&Math.sin(lx*57+yy*35+f.seed)> .83 || patches.pattern===3 && Math.sin(lx*35-yy*30+f.seed)> .18;
-   if(red)color=patches.red;
-   if(black)color=patches.dark;
-   if(patches.pattern===4)color=n>.68?'#ffffff':patches.white;
-   if(col>.78){glyph='.:;+'[Math.floor(n*4)];alpha=.75}
-   if(lx>.33&&Math.abs(yy)>.042&&Math.abs(yy)<.13){glyph='o';color='#202a2c';alpha=1}
-   if(lx>.4&&Math.abs(yy)<.035)glyph=':';
-  }else{color=patches.pattern===2?patches.white:patches.red;alpha=.72}
-  // offset copies make a typographic shadow without using bitmap fish assets
-  glyphAt(px+3,py+5,glyph,'#020b0e',.22);
-  glyphAt(px,py,glyph,color,alpha);
+ const L=f.len,cw=8.5*settings.glyph/100,ch=10*settings.glyph/100;
+ // Piecewise spine follows the head with delayed bends increasing toward the tail.
+ const spine=[];let x=f.x+Math.cos(f.angle)*L*.4,y=f.y+Math.sin(f.angle)*L*.4;
+ for(let i=0;i<=16;i++){const u=i/16,angle=f.angle-(f.bend||0)*u*.7+Math.sin(f.phase-u*5)*u*u*.65*settings.tail;spine.push({x,y,u});x-=Math.cos(angle)*L/16;y-=Math.sin(angle)*L/16}
+ const minX=Math.min(...spine.map(p=>p.x))-L*.3,maxX=Math.max(...spine.map(p=>p.x))+L*.3,minY=Math.min(...spine.map(p=>p.y))-L*.3,maxY=Math.max(...spine.map(p=>p.y))+L*.3;
+ for(let py=Math.floor(minY/ch)*ch;py<maxY;py+=ch)for(let px=Math.floor(minX/cw)*cw;px<maxX;px+=cw){
+ let best=Infinity,u=0,v=0;
+ for(let i=0;i<16;i++){const a=spine[i],b=spine[i+1],dx=b.x-a.x,dy=b.y-a.y,t=clamp(((px-a.x)*dx+(py-a.y)*dy)/(dx*dx+dy*dy),0,1),rx=px-a.x-t*dx,ry=py-a.y-t*dy,d=rx*rx+ry*ry;if(d<best){best=d;u=(i+t)/16;v=(rx*(-dy)+ry*dx)/Math.hypot(dx,dy)/L}}
+ if(u>=.999)continue;
+ const av=Math.abs(v),w=(u<.16?.14*Math.sqrt(Math.sin(u/.16*Math.PI/2)):.025+.115*Math.pow(Math.max(0,1-(u-.16)/.62),1.3))*f.bulk;
+ const body=u<.79&&av<w,barbel=u<.06&&av>.045&&av<.095,tail=u>.75&&av<(.025+(u-.75)*.65)&&u<.88+av*.75,fin=((u-.28)/.14)**2+((av-.17)/.085)**2<1;
+ if(!body&&!tail&&!fin&&!barbel)continue;
+ const n=h(Math.floor(u*36),Math.floor(v*50),f.id),p=f.look;
+ let color=p.white,glyph='t%SX8@#'[Math.floor(n*7)],alpha=.93;
+ if(body){const across=av/(w||1);let red=false;for(let j=0;j<3;j++){const center=.16+j*.22+(h(f.id,j)-.5)*.06;if(((u-center)/(.065+h(j,f.id)*.025))**2+((v-(h(j,3,f.id)-.5)*.045)/(.12*f.bulk))**2<1)red=true}if(red)color=p.red;if((p.pattern===1||p.pattern===3)&&h(Math.floor(u*15),Math.floor(v*18),f.id)>.8)color=p.dark;if(p.pattern===2)color=n>.6?p.red:p.white;if(p.pattern===4)color=p.white;if(across>.83)alpha=.55;if(u>.065&&u<.15&&across>.55&&across<.9){glyph='o';color='#262321'}if(u<.045)glyph=':';
+ }else{glyph='-/:.'[Math.floor(n*4)];alpha=.42;color=p.white}
+ if(settings.shadow)glyphAt(px+5,py+8,glyph,'#000000',.3);
+ if(settings.tiles){ctx.globalAlpha=alpha*(body?.36:.12);ctx.fillStyle=color;ctx.fillRect(px-cw*.46,py-ch*.45,cw*.92,ch*.9)}
+ if(settings.glow&&body&&n>.7){ctx.globalAlpha=.035;ctx.fillStyle=color;ctx.fillRect(px-cw,py-ch,cw*2,ch*2)}
+ glyphAt(px,py,glyph,color,alpha);
  }
 }
+
 function render(){
  ctx.clearRect(0,0,W,H);
- ctx.font=`500 10px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace`;
+ ctx.font=`500 ${9*settings.glyph/100}px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace`;
  ctx.textAlign='center';ctx.textBaseline='middle';
  // Glints from imagined currents, represented as occasional symbols.
  for(let i=0;i<46;i++){
   let x=(h(i,21)*W+Math.sin(time*.19+i)*15+W)%W,y=(h(i,46)*H+time*(2+i%4))%H;
   glyphAt(x,y,i%5===0?'~':i%3===0?'·':'.','#7aabb0',.09+(Math.sin(time*1.3+i)*.5+.5)*.07);
  }
- for(const r of ripples){const rad=(r.age/2.3)*r.max*1.6,fade=(1-r.age/2.3)*.45;for(let a=0;a<TAU;a+=.24){const x=r.x+Math.cos(a)*rad,y=r.y+Math.sin(a)*rad;glyphAt(x,y,Math.sin(a*8)>0?'.':'·','#b3d6cc',fade)}}
+ for(const r of settings.ripples?ripples:[]){const rad=(r.age/2.3)*r.max*1.6,fade=(1-r.age/2.3)*.45;for(let a=0;a<TAU;a+=.24){const x=r.x+Math.cos(a)*rad,y=r.y+Math.sin(a)*rad;glyphAt(x,y,Math.sin(a*8)>0?'.':'·','#b3d6cc',fade)}}
  for(const p of food){const pulse=.7+Math.sin(time*6+p.phase)*.17;glyphAt(p.x,p.y,'•','#e9c691',pulse);glyphAt(p.x+1,p.y+10,'.','#e9c691',.18)}
  const order=[...fish].sort((a,b)=>a.len-b.len);for(const f of order)koiGlyph(f);
  ctx.globalAlpha=1;
 }
-function frame(now){const dt=Math.min(.035,(now-last)/1000||.016);last=now;update(dt);render();if(!document.hidden)raf=requestAnimationFrame(frame)}
+function frame(now){
+ if(document.hidden)return;
+ raf=requestAnimationFrame(frame);
+ if(settings.cap&&now-lastRender<1000/settings.cap-.8)return;
+ const dt=Math.min(.05,(now-last)/1000||.016);last=now;lastRender=now;
+ const begin=performance.now();update(dt);render();paintMs=performance.now()-begin;
+ samples.push({t:now,cost:paintMs});while(samples.length&&samples[0].t<now-10000)samples.shift();
+ if(now-measureAt>=1000){measureAt=now;const recent=samples.filter(s=>s.t>now-1000),fps=recent.length,avg=samples.length>1?(samples.length-1)*1000/(now-samples[0].t):fps,cost=recent.reduce((n,s)=>n+s.cost,0)/Math.max(1,recent.length);fpsButton.textContent=settings.fps?fps+' FPS · 效能':'效能 ⚙';metrics.textContent=`近一秒 ${fps} FPS · 近十秒 ${avg.toFixed(1)} FPS\n計算＋繪圖 ${cost.toFixed(1)} ms／幀\n${fish.length} 條魚 · ${food.length} 顆飼料 · 已吃 ${eaten} 顆\nCanvas ${canvas.width} × ${canvas.height} · DPR ${dpr}\n幀率上限 ${settings.cap||'跟隨螢幕'}`}
+}
 function centerFeed(){feed(W*.52,H*.52);say('飼料已撒入水中')}
 function say(message){toastEl.textContent=message;toastEl.style.opacity='1';clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.style.opacity='0',1100)}
 canvas.addEventListener('pointermove',e=>{const r=canvas.getBoundingClientRect();e.pointerType==='mouse'&&movePointer(e.clientX-r.left,e.clientY-r.top)},{passive:true});
@@ -152,7 +165,7 @@ document.getElementById('feed').addEventListener('click',centerFeed);
 document.getElementById('add').addEventListener('click',()=>{if(fish.length>=15){say('最多 15 條錦鯉');return}addFish();say('新錦鯉入池！')});
 document.getElementById('clear').addEventListener('click',()=>{reset();say('池塘已重置')});
 addEventListener('resize',resize);resize();reset();render();raf=requestAnimationFrame(frame);
-document.addEventListener("visibilitychange",()=>{cancelAnimationFrame(raf);last=performance.now();if(!document.hidden)raf=requestAnimationFrame(frame)});
+document.addEventListener("visibilitychange",()=>{cancelAnimationFrame(raf);samples=[];lastRender=0;measureAt=0;last=performance.now();if(!document.hidden)raf=requestAnimationFrame(frame)});
 new ResizeObserver(()=>{resize();render()}).observe(stage);
 })();
 </script>
