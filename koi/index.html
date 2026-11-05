@@ -28,7 +28,7 @@ header{top:max(20px,env(safe-area-inset-top))}button{min-height:44px}footer{bott
 #stage::before{opacity:.07}.brand h1{font-size:clamp(28px,4vw,48px)}.brand small{display:none}
 #fps{position:fixed;right:16px;top:max(12px,env(safe-area-inset-top));z-index:6;border:0;background:#262621;color:#d9d3bd;padding:7px 12px;min-height:32px;font-size:11px}
 header .right{display:none}#settings{position:fixed;right:12px;top:max(52px,calc(env(safe-area-inset-top) + 44px));z-index:8;width:min(340px,calc(100vw - 24px));max-height:calc(100dvh - 120px);overflow:auto;background:#242420f5;border:1px solid #77745c55;border-radius:16px;padding:18px;box-shadow:0 12px 50px #0008;font-size:12px}#settings[hidden]{display:none}#settings label{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:13px 0}#settings input[type=range]{width:145px}#settings select{background:#38382e;color:#eee;padding:8px;border:1px solid #7775;border-radius:8px}#metrics{white-space:pre-line;color:#c4beaa;line-height:1.9;border-bottom:1px solid #7774;padding-bottom:12px;font-variant-numeric:tabular-nums}.settings-actions{display:flex;gap:8px}footer .instructions{font-size:10px}button.primary{background:#d8c3a2}input{accent-color:#c9b18e}@media(max-width:640px){.brand .tag{font-size:9px;margin-bottom:9px}.brand h1{font-size:29px}footer{gap:8px}.instructions{max-width:280px}}
-</style>
+.extra-settings{border-top:1px solid #7774;margin-top:14px;padding-top:14px}.extra-settings summary{cursor:pointer;min-height:35px;color:#dfc8a6}.extra-settings label{flex-wrap:wrap}.extra-settings input[type=range]{width:100%}.extra-settings output{margin-left:auto;font-variant-numeric:tabular-nums}#settings{overscroll-behavior:contain;padding-bottom:max(18px,env(safe-area-inset-bottom))}</style>
 </head>
 <body>
 <div id="stage"><canvas id="pond" aria-label="互動 ASCII 錦鯉池。點擊水面餵魚。"></canvas><div class="shade"></div></div>
@@ -36,18 +36,18 @@ header .right{display:none}#settings{position:fixed;right:12px;top:max(52px,calc
 <div id="legend">錦鯉游於字裡行間</div>
 <footer><div class="instructions"><b>↗ 點擊水面</b>，撒下飼料 · <b>移動滑鼠</b>，與魚互動<br>純 Canvas + JavaScript · 無圖片、無依賴</div><div class="buttons"><button class="primary" id="feed">＋ 餵食</button><button id="add">＋ 加一條魚</button><button id="clear">↺ 重置</button></div></footer>
 <button id="fps" aria-controls="settings" aria-expanded="false">FPS — · 效能</button>
-<section id="settings" hidden aria-label="畫質與效能設定"><div id="metrics"></div><label>FPS 顯示<input type="checkbox" data-setting="fps"></label><label>幀率上限<select data-setting="cap"><option value="30">30 FPS</option><option value="60">60 FPS</option><option value="0">跟隨螢幕</option></select></label><label>畫質<select data-setting="quality"><option value="1">省電</option><option value="1.5">標準</option><option value="2">精緻</option></select></label><label>字元大小 <output id="glyph-value"></output><input type="range" min="75" max="110" step="1" data-setting="glyph"></label><label>游速<input type="range" min="0.5" max="1.5" step="0.1" data-setting="speed"></label><label>擺尾幅度<input type="range" min="0.5" max="1.5" step="0.1" data-setting="tail"></label><label>方格材質<input type="checkbox" data-setting="tiles"></label><label>微光<input type="checkbox" data-setting="glow"></label><label>柔暗影<input type="checkbox" data-setting="shadow"></label><label>水波<input type="checkbox" data-setting="ripples"></label><label>滑鼠驚嚇<input type="checkbox" data-setting="scare"></label><div class="settings-actions"><button id="restore-settings">還原參數</button><button id="close-settings">關閉</button></div></section>
+<section id="settings" hidden aria-label="畫質與效能設定"><div id="metrics"></div><label>FPS 顯示<input type="checkbox" data-setting="fps"></label><label>幀率上限<select data-setting="cap"><option value="30">30 FPS</option><option value="60">60 FPS</option><option value="0">跟隨螢幕</option></select></label><label>畫質<select data-setting="quality"><option value="1">省電</option><option value="1.5">標準</option><option value="2">精緻</option></select></label><label>字元大小 <output id="glyph-value"></output><input type="range" min="75" max="110" step="1" data-setting="glyph"></label><label>游速<input type="range" min="0.5" max="1.5" step="0.1" data-setting="speed"></label><label>擺尾幅度<input type="range" min="0.5" max="1.5" step="0.1" data-setting="tail"></label><label>方格材質<input type="checkbox" data-setting="tiles"></label><label>微光<input type="checkbox" data-setting="glow"></label><label>柔暗影<input type="checkbox" data-setting="shadow"></label><label>水波<input type="checkbox" data-setting="ripples"></label><label>滑鼠驚嚇<input type="checkbox" data-setting="scare"></label><details class="extra-settings"><summary>更多參數</summary><label>魚身大小<output data-value="fishScale" data-unit="倍"></output><input aria-label="魚身大小" type="range" min="0.7" max="1.4" step="0.1" data-setting="fishScale"></label><label>擺尾頻率<output data-value="tailRate" data-unit="倍"></output><input aria-label="擺尾頻率" type="range" min="0.5" max="2" step="0.1" data-setting="tailRate"></label><label>每次餵食<output data-value="feedAmount" data-unit="顆"></output><input aria-label="每次餵食" type="range" min="1" max="12" step="1" data-setting="feedAmount"></label><label>飼料散布<output data-value="feedSpread" data-unit="px"></output><input aria-label="飼料散布" type="range" min="5" max="80" step="5" data-setting="feedSpread"></label><label>水流強度<output data-value="current" data-unit=""></output><input aria-label="水流強度" type="range" min="0" max="20" step="1" data-setting="current"></label><label>水流方向<output data-value="currentAngle" data-unit="°"></output><input aria-label="水流方向" type="range" min="0" max="360" step="15" data-setting="currentAngle"></label><label>魚身亮度<output data-value="brightness" data-unit="倍"></output><input aria-label="魚身亮度" type="range" min="0.5" max="1.5" step="0.1" data-setting="brightness"></label></details><div class="settings-actions"><button id="restore-settings">還原參數</button><button id="close-settings">關閉</button></div></section>
 <div id="toast" role="status" aria-live="polite"></div>
 <script>
 (()=>{
 'use strict';
 const canvas=document.getElementById('pond'),ctx=canvas.getContext('2d');
 const stage=document.getElementById('stage');
-const defaults={fps:true,cap:60,quality:1.5,glyph:88,speed:1,tail:1,tiles:true,glow:true,shadow:true,ripples:true,scare:true};
+const defaults={fps:true,cap:60,quality:1.5,glyph:88,speed:1,tail:1,tiles:true,glow:true,shadow:true,ripples:true,scare:true,fishScale:1,tailRate:1,feedAmount:6,feedSpread:36,current:0,currentAngle:0,brightness:1};
 let settings={...defaults};try{const saved=JSON.parse(localStorage.getItem('koi-settings-v2')||'{}');for(const k in defaults)if(typeof saved[k]===typeof defaults[k])settings[k]=saved[k]}catch(e){}
-for(const [k,min,max] of [['glyph',75,110],['speed',.5,1.5],['tail',.5,1.5]])settings[k]=Math.max(min,Math.min(max,settings[k]));if(![0,30,60].includes(settings.cap))settings.cap=60;if(![1,1.5,2].includes(settings.quality))settings.quality=1.5;
+for(const [k,min,max] of [['glyph',75,110],['speed',.5,1.5],['tail',.5,1.5],['fishScale',.7,1.4],['tailRate',.5,2],['feedAmount',1,12],['feedSpread',5,80],['current',0,20],['currentAngle',0,360],['brightness',.5,1.5]])settings[k]=Number.isFinite(settings[k])?Math.max(min,Math.min(max,settings[k])):defaults[k];if(![0,30,60].includes(settings.cap))settings.cap=60;if(![1,1.5,2].includes(settings.quality))settings.quality=1.5;
 const fpsButton=document.getElementById('fps'),panel=document.getElementById('settings'),metrics=document.getElementById('metrics');
-function syncSettings(){document.querySelectorAll('[data-setting]').forEach(el=>{const k=el.dataset.setting;if(el.type==='checkbox')el.checked=settings[k];else el.value=settings[k]});document.getElementById('glyph-value').textContent=settings.glyph+'%';if(!settings.fps)fpsButton.textContent='效能 ⚙'}
+function syncSettings(){document.querySelectorAll('[data-setting]').forEach(el=>{const k=el.dataset.setting;if(el.type==='checkbox')el.checked=settings[k];else el.value=settings[k]});document.getElementById('glyph-value').textContent=settings.glyph+'%';document.querySelectorAll('[data-value]').forEach(el=>el.textContent=settings[el.dataset.value]+el.dataset.unit);if(!settings.fps)fpsButton.textContent='效能 ⚙'}
 function togglePanel(open){panel.hidden=!open;fpsButton.setAttribute('aria-expanded',String(open))}fpsButton.onclick=()=>togglePanel(panel.hidden);document.getElementById('close-settings').onclick=()=>togglePanel(false);
 document.querySelectorAll('[data-setting]').forEach(el=>el.addEventListener('input',()=>{settings[el.dataset.setting]=el.type==='checkbox'?el.checked:Number(el.value);try{localStorage.setItem('koi-settings-v2',JSON.stringify(settings))}catch(e){}syncSettings();if(el.dataset.setting==='quality')resize()}));
 document.getElementById('restore-settings').onclick=()=>{settings={...defaults};try{localStorage.removeItem('koi-settings-v2')}catch(e){}syncSettings();resize()};syncSettings();
@@ -72,17 +72,17 @@ function addFish(x=rand(W*.2,W*.8),y=rand(H*.2,H*.8)){
 }
 function reset(){fish=[];food=[];ripples=[];nextId=1;eaten=0;eatenEl.textContent=0;const count=W<600?4:6;for(let i=0;i<count;i++){const x=W<600?W*(i%2?.72:.30):W*(.25+.55*h(i,6.2));const y=H*(.23+.54*(i+.5)/count);addFish(x,y)}foodEl.textContent='0'}
 function feed(x,y){
- for(let j=0;j<6;j++){const a=rand(0,TAU),r=rand(5,36);food.push({x:clamp(x+Math.cos(a)*r,10,W-10),y:clamp(y+Math.sin(a)*r,10,H-10),age:0,life:rand(18,25),phase:rand(0,TAU)})}
+ for(let j=0;j<Math.round(settings.feedAmount);j++){const a=rand(0,TAU),r=rand(0,settings.feedSpread);food.push({x:clamp(x+Math.cos(a)*r,10,W-10),y:clamp(y+Math.sin(a)*r,10,H-10),age:0,life:rand(18,25),phase:rand(0,TAU)})}
  if(food.length>100)food.splice(0,food.length-100);ripples.push({x,y,age:0,max:85});foodEl.textContent=food.length;
 }
 let pointer={x:-500,y:-500,lastX:-500,lastY:-500,speed:0,active:false};
 function movePointer(x,y){const s=Math.hypot(x-pointer.x,y-pointer.y);pointer.speed=pointer.active?s*25:0;pointer.x=x;pointer.y=y;pointer.active=true}
 function update(dt){
  time+=dt;pointer.speed*=Math.exp(-dt*5);
- food.forEach(p=>{p.age+=dt;p.y+=Math.sin(p.phase+time)*dt*.45});food=food.filter(p=>p.age<p.life);foodEl.textContent=food.length;
+ food.forEach(p=>{p.age+=dt;p.y=clamp(p.y+Math.sin(p.phase+time)*dt*.45+Math.sin(settings.currentAngle*Math.PI/180)*settings.current*dt,10,H-10);p.x=clamp(p.x+Math.cos(settings.currentAngle*Math.PI/180)*settings.current*dt,10,W-10)});food=food.filter(p=>p.age<p.life);foodEl.textContent=food.length;
  ripples.forEach(r=>r.age+=dt);ripples=ripples.filter(r=>r.age<2.3);
  for(let i=0;i<fish.length;i++){
-  const f=fish[i];f.phase+=dt*(2.7+f.speed*.035);f.wander-=dt;
+  const f=fish[i];f.phase+=dt*(2.7+f.speed*.035)*settings.tailRate;f.wander-=dt;
   if(f.wander<=0){f.wander=rand(1.5,3.5);f.turn=rand(-.75,.75)}
   let dx=Math.cos(f.angle)+Math.cos(f.angle+f.turn)*.35,dy=Math.sin(f.angle)+Math.sin(f.angle+f.turn)*.35;
   let target=null,best=Infinity;
@@ -101,6 +101,7 @@ function update(dt){
   const goal=target?randless(f,54,65):f.cruise;
   f.speed+=(goal-f.speed)*Math.min(1,dt*1.5);
   f.x+=Math.cos(f.angle)*f.speed*dt*settings.speed;f.y+=Math.sin(f.angle)*f.speed*dt*settings.speed;
+  f.x+=Math.cos(settings.currentAngle*Math.PI/180)*settings.current*dt*.2;f.y+=Math.sin(settings.currentAngle*Math.PI/180)*settings.current*dt*.2;
   f.x=clamp(f.x,-30,W+30);f.y=clamp(f.y,-30,H+30);
  }
 }
@@ -110,7 +111,7 @@ function rgba(hex,opacity){const n=parseInt(hex.slice(1),16);return `rgba(${n>>1
 function glyphAt(x,y,glyph,color,alpha=1){ctx.globalAlpha=alpha;ctx.fillStyle=color;ctx.fillText(glyph,x,y)}
 // The fish are drawn entirely from characters. Each screen cell is mapped back to fish-body space.
 function koiGlyph(f){
- const L=f.len,cw=8.5*settings.glyph/100,ch=10*settings.glyph/100;
+ const L=f.len*settings.fishScale,cw=8.5*settings.glyph/100,ch=10*settings.glyph/100;
  // Piecewise spine follows the head with delayed bends increasing toward the tail.
  const spine=[];let x=f.x+Math.cos(f.angle)*L*.4,y=f.y+Math.sin(f.angle)*L*.4;
  for(let i=0;i<=16;i++){const u=i/16,angle=f.angle-(f.bend||0)*u*.7+Math.sin(f.phase-u*5)*u*u*.65*settings.tail;spine.push({x,y,u});x-=Math.cos(angle)*L/16;y-=Math.sin(angle)*L/16}
@@ -118,10 +119,11 @@ function koiGlyph(f){
  for(let py=Math.floor(minY/ch)*ch;py<maxY;py+=ch)for(let px=Math.floor(minX/cw)*cw;px<maxX;px+=cw){
  let best=Infinity,u=0,v=0;
  for(let i=0;i<16;i++){const a=spine[i],b=spine[i+1],dx=b.x-a.x,dy=b.y-a.y,t=clamp(((px-a.x)*dx+(py-a.y)*dy)/(dx*dx+dy*dy),0,1),rx=px-a.x-t*dx,ry=py-a.y-t*dy,d=rx*rx+ry*ry;if(d<best){best=d;u=(i+t)/16;v=(rx*(-dy)+ry*dx)/Math.hypot(dx,dy)/L}}
- if(u>=.999)continue;
+ // Reject endpoint projections: lateral distance alone must not extend the snout.
+ if(u<=0||u>=.999)continue;
  const av=Math.abs(v),w=(u<.16?.14*Math.sqrt(Math.sin(u/.16*Math.PI/2)):.025+.115*Math.pow(Math.max(0,1-(u-.16)/.62),1.3))*f.bulk;
- const body=u<.79&&av<w,barbel=u<.06&&av>.045&&av<.095,tail=u>.75&&av<(.025+(u-.75)*.65)&&u<.88+av*.75,fin=((u-.28)/.14)**2+((av-.17)/.085)**2<1;
- if(!body&&!tail&&!fin&&!barbel)continue;
+ const body=u<.79&&av<w,tail=u>.75&&av<(.025+(u-.75)*.65)&&u<.88+av*.75,fin=((u-.28)/.14)**2+((av-.17)/.085)**2<1;
+ if(!body&&!tail&&!fin)continue;
  const n=h(Math.floor(u*36),Math.floor(v*50),f.id),p=f.look;
  let color=p.white,glyph='t%SX8@#'[Math.floor(n*7)],alpha=.93;
  if(body){const across=av/(w||1);let red=false;for(let j=0;j<3;j++){const center=.16+j*.22+(h(f.id,j)-.5)*.06;if(((u-center)/(.065+h(j,f.id)*.025))**2+((v-(h(j,3,f.id)-.5)*.045)/(.12*f.bulk))**2<1)red=true}if(red)color=p.red;if((p.pattern===1||p.pattern===3)&&h(Math.floor(u*15),Math.floor(v*18),f.id)>.8)color=p.dark;if(p.pattern===2)color=n>.6?p.red:p.white;if(p.pattern===4)color=p.white;if(across>.83)alpha=.55;if(u>.065&&u<.15&&across>.55&&across<.9){glyph='o';color='#262321'}if(u<.045)glyph=':';
@@ -129,7 +131,7 @@ function koiGlyph(f){
  if(settings.shadow)glyphAt(px+5,py+8,glyph,'#000000',.3);
  if(settings.tiles){ctx.globalAlpha=alpha*(body?.36:.12);ctx.fillStyle=color;ctx.fillRect(px-cw*.46,py-ch*.45,cw*.92,ch*.9)}
  if(settings.glow&&body&&n>.7){ctx.globalAlpha=.035;ctx.fillStyle=color;ctx.fillRect(px-cw,py-ch,cw*2,ch*2)}
- glyphAt(px,py,glyph,color,alpha);
+ glyphAt(px,py,glyph,color,Math.min(1,alpha*settings.brightness));
  }
 }
 
